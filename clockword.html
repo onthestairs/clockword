@@ -5,7 +5,7 @@
 		<script type="text/javascript">
 
 		var Clockword = function(el, options) {
-			this.canvas = options.canvas || 500;
+			this.canvas = options.canvas || 400;
 			this.width = this.canvas-4;
 			this.x = this.width/2;
 			this.y = this.width/2;
@@ -13,6 +13,7 @@
 			this.middle_letter = options.middle_letter || 'P';
 			this.word_length = options.word_length || 6;
 			this.answers = options.answers;
+			
 
 			this.r = d3.scale.linear()
 						.domain([0, this.word_length])
@@ -23,7 +24,11 @@
 							.range([0, 2*Math.PI]);
 
 			clockword = d3.select(el)
+								.append('div')
+									.attr('class', 'clockword_container')
+									.style('float', 'left')
 								.append('svg')
+									.style('float', 'left')
 									.attr('class', 'clockword')
 									.attr('width', this.canvas)
 								.append("g")
@@ -74,8 +79,20 @@
 
 			for(i=0; i<12; i++) {
 				for(j=0; j<this.word_length-1; j++) {
-					this.insert_letter(answers[i][j], {hour:i+1, indent:j+1});
+					this.insert_letter(answers[i][1][j], {hour:i+1, indent:j+1});
 				}
+			}
+
+			clues = d3.select(el)
+						.append('div')
+							.attr('id', 'clues')
+							.style('padding-left', this.canvas+20)
+							.style('padding-top', 20);
+			list = clues.append('ol');
+			for(i=0; i<12; i++) {
+				list.append('li')
+						.style('margin-left', '0px')
+						.text(answers[i][0]);
 			}
 		}
 
@@ -100,18 +117,18 @@
 		<div id="clockword">
 		</div>
 		<script type="text/javascript">
-			answers = ['hatred', 
-						'waited', 
-						'elated', 
-						'looted',
-						'demand',
-						'attend',
-						'append',
-						'friend',
-						'fitted',
-						'afraid',
-						'scared',
-						'intend'];
+			answers = [['Intense Dislike', 'hatred'], 
+						['Abided', 'waited'], 
+						['Very Happy', 'elated'], 
+						['Stole', 'looted'],
+						['Intense Dislike', 'demand'],
+						['Go to Event', 'attend'],
+						['Add to', 'append'],
+						['Mate', 'friend'],
+						['Put in place', 'fitted'],
+						['Horrified', 'afraid'],
+						['Fearful', 'scared'],
+						['Plan to do', 'intend']];
 			clockword = new Clockword('#clockword', {middle_letter: 'D', answers: answers});
 		</script>
 	</body>
