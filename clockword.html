@@ -1,0 +1,70 @@
+<html>
+	<head>
+		<title>Clockword</title>
+		<script src="http://d3js.org/d3.v2.js"></script>
+	</head>
+	<body>
+		<div id="clockword">
+		</div>
+		<script type="text/javascript">
+			var width = 400;
+			var radius = width/2;
+			var middle_letter = 'D';
+			var word_length = 6;
+
+			var clockword = d3.select('#clockword')
+								.append('svg')
+								.attr('class', 'clockword')
+								.attr('width', width);
+
+			clockword.append('circle')
+						.attr('r', radius)
+						.attr('cy', width/2)
+						.attr('cx', width/2)
+						.style('stroke-width', 2)
+						.style('stroke', 'black')
+						.style('fill-opacity', 0);
+
+			var r = d3.scale.linear()
+						.domain([0, word_length])
+						.range([0, radius]);
+
+			var theta = d3.scale.linear()
+						.domain([0, 12])
+						.range([0, 2*Math.PI]);
+
+			for(var i=6; i>=1; i--) {
+				circle = clockword.append('circle')
+						.attr('r', r(i))
+						.attr('cy', width/2)
+						.attr('cx', width/2)
+						.style('stroke-width', 1)
+						.style('stroke', 'black');
+
+				if (i==1 || i==word_length) {
+					circle.style('fill', '#ccc');
+				}
+				else {
+					circle.style('fill', 'white');
+				}
+			}
+
+			for (var i=1; i<=12; i++) {
+				clockword.append('line')
+						.attr('x1', (width/2) + (1/6)*radius*Math.sin(theta(i)) )
+						.attr('y1', (width/2) - (1/6)*radius*Math.cos(theta(i)) )
+						.attr('x2', (width/2) + radius*Math.sin(theta(i)) )
+						.attr('y2', (width/2) - radius*Math.cos(theta(i)) )
+						.style("stroke", "black");
+			}
+
+			clockword.append('text')
+						.attr('x', width/2)
+						.attr('y', width/2)
+						.attr('text-anchor', 'middle')
+						.attr('dy', ".35em")
+						.style('font-size', '3em')
+						.text(middle_letter);
+		</script>
+	</body>
+</html>
