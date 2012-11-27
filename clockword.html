@@ -5,6 +5,8 @@
 		<script type="text/javascript">
 
 		var Clockword = function(el, options) {
+			//save all the object variables
+
 			this.canvas = options.canvas || 400;
 			this.width = this.canvas-4;
 			this.x = this.width/2;
@@ -13,34 +15,32 @@
 			this.middle_letter = options.middle_letter || 'P';
 			this.word_length = options.word_length || 6;
 			this.answers = options.answers;
+			this.show_answers = options.show_answers || false;
+			this.show_clues = options.show_clues || false;
+			//alert(options.show_clues);
 			
-
+			//this is a scale which takes in an index of a word, and returns how far along the radius it should be
 			this.r = d3.scale.linear()
 						.domain([0, this.word_length])
 						.range([0, this.radius]);
 
+			//this is a scale which returns an angle based on twelve steps
 			this.theta = d3.scale.linear()
 							.domain([0, 12])
 							.range([0, 2*Math.PI]);
 
+			//make the svg element
 			clockword = d3.select(el)
 								.append('div')
 									.attr('class', 'clockword_container')
 									.style('float', 'left')
 								.append('svg')
-									.style('float', 'left')
 									.attr('class', 'clockword')
 									.attr('width', this.canvas)
 								.append("g")
 									.attr("transform", "translate(2,2)");
 
-			clockword.append('circle')
-						.attr('r', this.radius)
-						.attr('cy', this.y)
-						.attr('cx', this.x)
-						.style('stroke-width', 2)
-						.style('stroke', 'black')
-						.style('fill-opacity', 0);
+			//add each circle, starting from the outside so that the inside of each circle is laid over the previous ones			
 
 			for(var i=this.word_length; i>=1; i--) {
 				circle = clockword.append('circle')
@@ -51,13 +51,19 @@
 						.style('stroke', 'black');
 
 				if (i==1 || i==this.word_length) {
+					//grey for the outer and inner circles
 					circle.style('fill', '#ccc');
+					if (i==this.word_length) {
+						//outer circle has bigger stroke
+						circle.style('stroke-width', 2);
+					}
 				}
 				else {
 					circle.style('fill', 'white');
 				}
 			}
 
+			// draw the lines from the centre to the edge
 			for (var i=1; i<=12; i++) {
 				clockword.append('line')
 						.attr('x1', (this.x) + (1/this.word_length)*this.radius*Math.sin(this.theta(i)) )
@@ -67,6 +73,7 @@
 						.style("stroke", "black");
 			}
 
+			//draw the middle letter
 			clockword.append('text')
 						.attr('x', this.x)
 						.attr('y', this.y)
@@ -77,40 +84,84 @@
 
 			this.clockword = clockword;
 
+			//fill in the answers with blank data
+			var space = '      ';
+			var answers = [];
+			for(i=1;i<=12;i++) {answers.push(space);}
+			this.populate(answers);
+
+			//if we just want to see the answers
+			if( this.show_answers == true ) {
+				var answers = [];
+				for(i=0; i<this.answers.length; i++) {
+					answers.push[this.answers[i][1]];
+				}
+				this.populate(answers);
+			}
+
+			if( this.show_clues == true ) {
+				//create an area for the clues
+				clues = d3.select(el)
+							.append('div')
+								.attr('id', 'clues')
+								.style('padding-left', this.canvas+20)
+								.style('padding-top', 20);
+				list = clues.append('ol');
+				//add each clue
+				for(i=0; i<12; i++) {
+					list.append('li')
+							.style('margin-left', '0px')
+							.text(answers[i][0]);
+				}
+			}
+		}
+
+		Clockword.prototype.populate = function(answers) {
+			var parent = this;
+			var answer_group = this.clockword.selectAll('.answer_group')
+							.data(answers);
+		
+			var answer = answer_group.enter()
+							.append('g')
+								.attr('class', 'answer_group')
+								.selectAll('.answer')
+								.data(function(d, i) {
+									console.log(d + ' entered at ' + i);
+									return d.split('').slice(0,-1);
+								})
+								.enter()
+								.append('text')
+									.attr('class', 'answer')
+									.attr('x', function(d, i, j) {
+										var from_centre = parent.word_length - i - 1 + 0.5;
+										return parent.x + parent.r(from_centre)*Math.sin(parent.theta(j+0.5));
+									})
+									.attr('y', function(d, i, j) {
+										var from_centre = parent.word_length - i - 1 + 0.5;
+										return parent.y - parent.r(from_centre)*Math.cos(parent.theta(j+0.5));
+									})
+									.attr('text-anchor', 'middle')
+									.attr('dy', ".35em")
+									.text(function(d) {
+										return d.toUpperCase();
+									});
+			answer_group.selectAll('.answer')
+				.data(function(d, i) {
+					console.log(d.split('').slice(0,-1));
+					return d.split('').slice(0,-1);
+				})
+				.transition()
+				.text(function(d) {
+					//console.log(d);
+					return d.toUpperCase();
+				});
+			/*//fill in the answers
 			for(i=0; i<12; i++) {
 				for(j=0; j<this.word_length-1; j++) {
 					this.insert_letter(answers[i][1][j], {hour:i+1, indent:j+1});
 				}
-			}
-
-			clues = d3.select(el)
-						.append('div')
-							.attr('id', 'clues')
-							.style('padding-left', this.canvas+20)
-							.style('padding-top', 20);
-			list = clues.append('ol');
-			for(i=0; i<12; i++) {
-				list.append('li')
-						.style('margin-left', '0px')
-						.text(answers[i][0]);
-			}
-		}
-
-		Clockword.prototype.insert_letter = function(letter, pos) {
-			var hour = pos.hour;
-			var indent = pos.indent;
-			var from_centre = this.word_length - indent + 0.5;
-			hour = hour - 0.5;
-			letter = letter.toUpperCase();
-
-			this.clockword.append('text')
-							.attr('x', this.x + this.r(from_centre)*Math.sin(this.theta(hour)) )
-							.attr('y', this.y - this.r(from_centre)*Math.cos(this.theta(hour)) )
-							.attr('text-anchor', 'middle')
-							.attr('dy', ".35em")
-							.text(letter);
+			}*/
 		};
-
 		</script>
 	</head>
 	<body>
@@ -129,7 +180,11 @@
 						['Horrified', 'afraid'],
 						['Fearful', 'scared'],
 						['Plan to do', 'intend']];
-			clockword = new Clockword('#clockword', {middle_letter: 'D', answers: answers});
+			clockword = new Clockword('#clockword', {middle_letter: 'D', answers: answers, show_clues: false, show_answers: false});
+			answers = ['ponced', 'wted', 'elated', 'lted', 'dand', 'attend', 'append', 'friend', 'fitted', 'afraid'];
+			clockword.populate(answers);
+			answers = ['ponced', 'waited', 'elated', 'looted', 'demand', 'attend', 'append', 'friend', 'fitted', 'afraid', 'scared', 'intend'];
+			clockword.populate(answers);
 		</script>
 	</body>
 </html>
